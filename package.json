@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/Stan-Getz/natours/issues"
   },
-  "homepage": "https://github.com/Stan-Getz/natours#readme"
+  "homepage": "https://github.com/Stan-Getz/natours#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
