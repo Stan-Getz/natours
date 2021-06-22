@@ -12,6 +12,7 @@ const DB = process.env.DATABASE.replace(
 mongoose
   .connect(DB, {
     useNewUrlParser: true,
+    useUnifiedTopology: true,
     useCreateIndex: true,
     useFindAndModify: false,
   })
@@ -19,6 +20,7 @@ mongoose
     console.log('DB connection succesful!');
   });
 
+// Schema
 const tourSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -35,7 +37,23 @@ const tourSchema = new mongoose.Schema({
   },
 });
 
+// Model
 const Tour = mongoose.model('Tour', tourSchema);
+
+// Instance of a model
+const testTour = new Tour({
+  name: 'The Park Camper',
+  price: 997,
+});
+
+testTour
+  .save()
+  .then((doc) => {
+    console.log(doc);
+  })
+  .catch((err) => {
+    console.log('ERROR 💥:', err);
+  });
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
