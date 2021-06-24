@@ -30,7 +30,7 @@ exports.getAllTours = async (req, res) => {
       //  Mongoose
       //  sort('price ratingsAverage')
     } else {
-      query = query.sort('-createdAt');
+      query = query.sort('-createdAt _id');
     }
 
     // 3) Field Limiting
@@ -39,6 +39,20 @@ exports.getAllTours = async (req, res) => {
       query = query.select(fields);
     } else {
       query = query.select('-__v');
+    }
+
+    // 4) Pagination
+    // || defines default values in JavaScript
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 100;
+    const skip = (page - 1) * limit;
+
+    // page=2&limit=10, 1-10 page 1, 11-20, page 2 ...
+    query = query.skip(skip).limit(limit);
+
+    if (req.query.page) {
+      const numTours = await Tour.countDocuments();
+      if (skip >= numTours) throw new Error('This page does not exist');
     }
 
     // EXECUTE QUERY
