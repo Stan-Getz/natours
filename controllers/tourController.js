@@ -2,13 +2,28 @@ const Tour = require('../models/tourModel');
 
 exports.getAllTours = async (req, res) => {
   try {
+    console.log(req.query);
+
     // BUILD QUERY
+    // 1) FILTERING
     const queryObj = { ...req.query };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
+    // 2) ADVANCED FILTERING
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    console.log(JSON.parse(queryStr));
+
+    // { difficulty: 'easy', duration: {$gte: 5} }
+    // { difficulty: 'easy', duration: { gte: '5' } }
+    // gte, gt, lte, lt
+
     // 1ST OPTION OF WRITING A QUERY
-    const query = await Tour.find(queryObj);
+    const query = Tour.find(JSON.parse(queryStr));
+
+    // EXECUTE QUERY
+    const tours = await query;
 
     // 2ND OPTION USING SPECIAL MONGOOSE METHODS
     // const query = await Tour.find()
@@ -16,9 +31,6 @@ exports.getAllTours = async (req, res) => {
     //   .equals(5)
     //   .where('difficulty')
     //   .equals('easy');
-
-    // EXECUTE QUERY
-    const tours = await query;
 
     // SEND RESPONSE
     res.status(200).json({
