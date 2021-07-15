@@ -1,4 +1,5 @@
 const Tour = require('../models/tourModel');
+const APIFeatures = require('../utils/apiFeatures');
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '5';
@@ -9,61 +10,13 @@ exports.aliasTopTours = (req, res, next) => {
 
 exports.getAllTours = async (req, res) => {
   try {
-    console.log(req.query);
-
-    // 1A) Filtering
-    // BUILD QUERY
-    const queryObj = { ...req.query };
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach((el) => delete queryObj[el]);
-
-    // 1B) Advanced Filtering
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-    console.log(JSON.parse(queryStr));
-
-    // { difficulty: 'easy', duration: {$gte: 5} }
-    // { difficulty: 'easy', duration: { gte: '5' } }
-    // gte, gt, lte, lt
-
-    // 1ST OPTION OF WRITING A QUERY
-    let query = Tour.find(JSON.parse(queryStr));
-
-    // 2) Sorting
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
-      console.log(sortBy);
-      query = query.sort(sortBy);
-      //  Mongoose
-      //  sort('price ratingsAverage')
-    } else {
-      query = query.sort('-createdAt _id');
-    }
-
-    // 3) Field Limiting
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
-      query = query.select(fields);
-    } else {
-      query = query.select('-__v');
-    }
-
-    // 4) Pagination
-    // || defines default values in JavaScript
-    const page = req.query.page * 1 || 1; // defining a default value in JS: "|| something"
-    const limit = req.query.limit * 1 || 100;
-    const skip = (page - 1) * limit;
-
-    // page=2&limit=10, 1-10 page 1, 11-20, page 2 ...
-    query = query.skip(skip).limit(limit);
-
-    if (req.query.page) {
-      const numTours = await Tour.countDocuments();
-      if (skip >= numTours) throw new Error('This page does not exist');
-    }
-
     // EXECUTE QUERY
-    const tours = await query;
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    const tours = await features.query;
 
     // 2ND OPTION USING SPECIAL MONGOOSE METHODS
     // const query = await Tour.find()
@@ -81,6 +34,7 @@ exports.getAllTours = async (req, res) => {
       },
     });
   } catch (err) {
+    console.log(err);
     res.status(404).json({
       status: 'fail',
       message: err,
